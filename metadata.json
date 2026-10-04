@@ -1,0 +1,8 @@
+{
+  "name": "CampusOS",
+  "description": "Your college life, organized. Complete student productivity suite with notes, tasks, timetable, study progress, CGPA calculator, Pomodoro timer, and coding tracker.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
