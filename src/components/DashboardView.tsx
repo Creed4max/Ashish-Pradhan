@@ -11,11 +11,14 @@ import {
   WeeklyGoals,
   StudentUser,
   AppNotification,
+  UserRole,
 } from '../types';
 import { DynamicGreeting } from './DynamicGreeting';
 import { TeacherDashboardView } from './TeacherDashboardView';
 import { AdminDashboardView } from './AdminDashboardView';
 import { AiCourseworkSidebar } from './AiCourseworkSidebar';
+import { WeeklyTaskChart } from './WeeklyTaskChart';
+import { GeminiChatbot } from './GeminiChatbot';
 import {
   CheckCircle2,
   Circle,
@@ -93,9 +96,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onTriggerAlert,
   onToggleTopic,
 }) => {
-  const [perspectiveOverride, setPerspectiveOverride] = useState<'student' | 'teacher' | 'admin' | null>(null);
+  const [perspectiveOverride, setPerspectiveOverride] = useState<UserRole | null>(null);
   const effectiveRole = perspectiveOverride || currentUser?.role || 'student';
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
+  const [isGeminiChatOpen, setIsGeminiChatOpen] = useState(false);
 
   const [quickTaskTitle, setQuickTaskTitle] = useState('');
   const [selectedSubjectId, setSelectedSubjectId] = useState(subjects[0]?.id || '');
@@ -252,6 +256,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       priority: 'medium',
       status: 'pending',
       type: 'assignment',
+      category: 'Homework',
+      tags: ['today'],
     });
 
     setQuickTaskTitle('');
@@ -278,14 +284,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const problemOfTheDay = codingProblems.find((p) => p.status !== 'Solved') || codingProblems[0];
 
   // Conditionally render based on user's role:
-  // 'teacher' -> Teacher Class Management Tools & Faculty Portal
-  if (effectiveRole === 'teacher') {
+  // 'teacher' or 'hod' -> Teacher Class Management Tools & Faculty Portal
+  if (effectiveRole === 'teacher' || effectiveRole === 'hod') {
     return (
       <div className="space-y-4">
         {perspectiveOverride && (
           <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
             <span className="font-semibold text-emerald-900">
-              Previewing <strong>Teacher Class Management Suite</strong>
+              Previewing <strong>{effectiveRole === 'hod' ? 'HOD Department & Faculty Suite' : 'Teacher Class Management Suite'}</strong>
             </span>
             <button
               type="button"
@@ -406,7 +412,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             onClick={() => setPerspectiveOverride(currentUser?.role || null)}
             className="font-bold text-indigo-700 hover:text-indigo-900 underline cursor-pointer"
           >
-            Return to {currentUser?.role === 'teacher' ? 'Teacher Class Hub' : currentUser?.role === 'admin' ? 'Admin Hub' : 'Default View'} →
+            Return to {currentUser?.role === 'hod' ? 'HOD Department Hub' : currentUser?.role === 'teacher' ? 'Teacher Class Hub' : currentUser?.role === 'admin' ? 'Admin Hub' : 'Default View'} →
           </button>
         </div>
       )}
@@ -419,7 +425,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         todayStudyMinutes={todayStudyMinutes}
       />
 
-      {/* AI Coursework Assistant Launch Banner */}
+      {/* AI Assistant Launch Banner */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-4 sm:p-5 shadow-xs border border-indigo-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-inner shrink-0">
@@ -427,26 +433,36 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-white">AI Course Material Assistant</h3>
+              <h3 className="text-sm font-bold text-white">Gemini Multi-Turn Academic Assistant</h3>
               <span className="text-[10px] font-bold bg-indigo-500/30 text-indigo-300 border border-indigo-400/30 px-2 py-0.5 rounded-full">
-                Syllabus & Notes
+                Gemini 3.5 & 3.1 Pro
               </span>
             </div>
             <p className="text-xs text-indigo-200/90 mt-0.5">
-              Ask questions grounded directly in your syllabus modules and personal lecture notes.
+              Multi-turn study thread for STEM problem-solving, code architecture, and coursework explanations.
             </p>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsAiSidebarOpen(true)}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white text-slate-950 hover:bg-indigo-50 text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
-        >
-          <Sparkles className="w-4 h-4 text-indigo-600" />
-          <span>Ask Course Assistant</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsGeminiChatOpen(true)}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-xs font-bold transition-all shadow-md hover:scale-[1.02] cursor-pointer shrink-0"
+          >
+            <Sparkles className="w-4 h-4 text-amber-300" />
+            <span>Chat with Gemini</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsAiSidebarOpen(true)}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all border border-white/15 cursor-pointer shrink-0"
+          >
+            <span>Course Notes Q&A</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Metric Cards Grid (Matching User Brief) */}
@@ -945,6 +961,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Weekly Tasks Data Visualization (Recharts Bar Chart: Completed vs Pending) */}
+      <WeeklyTaskChart
+        tasks={tasks}
+        onNavigateTasks={() => onNavigateTab('tasks')}
+      />
 
       {/* Two-Column Core Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

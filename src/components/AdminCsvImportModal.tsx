@@ -20,12 +20,13 @@ interface AdminCsvImportModalProps {
   existingIdentifiers: string[];
 }
 
-const SAMPLE_CSV = `Name,Role,Department,Identifier,Email,Designation,Attendance,StudyHoursWeek,Phone
-Ankit Pattnaik,student,Computer Science & Engineering,2201289210,ankit.cse@riteindia.edu.in,Semester 5,95.0,27.5,+91 94371 11223
-Dr. Rakesh Ranjan,teacher,Electronics & Communication,FAC-ECE-305,r.ranjan@riteindia.edu.in,Assistant Professor,97.5,38.0,+91 98610 22334
-Bidulata Samal,student,Mechanical Engineering,2201289222,bidulata.me@riteindia.edu.in,Semester 3,89.2,21.0,+91 97780 33445
-Prof. Manoranjan Pradhan,teacher,Computer Science & Engineering,FAC-CSE-212,m.pradhan@riteindia.edu.in,Associate Professor,96.0,36.0,+91 94372 44556
-Lipsa Das,student,Civil Engineering,2201289235,lipsa.ce@riteindia.edu.in,Semester 5,93.4,25.0,+91 98611 55667`;
+const SAMPLE_CSV = `Name,Role,Department,Identifier,Email,Designation,Attendance,StudyHoursWeek
+Ankit Pattnaik,student,Computer Science & Engineering,2201289210,ankit.cse@riteindia.edu.in,Semester 5,95.0,27.5
+Dr. Debabrata Swain,hod,Computer Science & Engineering,HOD-CSE-101,d.swain@riteindia.edu.in,Head of Department & Professor,98.5,42.0
+Dr. Rakesh Ranjan,teacher,Electronics & Communication,FAC-ECE-305,r.ranjan@riteindia.edu.in,Assistant Professor,97.5,38.0
+Bidulata Samal,student,Mechanical Engineering,2201289222,bidulata.me@riteindia.edu.in,Semester 3,89.2,21.0
+Prof. Manoranjan Pradhan,teacher,Computer Science & Engineering,FAC-CSE-212,m.pradhan@riteindia.edu.in,Associate Professor,96.0,36.0
+Lipsa Das,student,Civil Engineering,2201289235,lipsa.ce@riteindia.edu.in,Semester 5,93.4,25.0`;
 
 export const AdminCsvImportModal: React.FC<AdminCsvImportModalProps> = ({
   isOpen,
@@ -65,7 +66,6 @@ export const AdminCsvImportModal: React.FC<AdminCsvImportModalProps> = ({
     const desigIdx = header.findIndex((h) => h.includes('desig') || h.includes('semester'));
     const attIdx = header.findIndex((h) => h.includes('att') || h.includes('attendance'));
     const studyIdx = header.findIndex((h) => h.includes('study') || h.includes('hours'));
-    const phoneIdx = header.findIndex((h) => h.includes('phone') || h.includes('contact'));
 
     if (nameIdx === -1 || roleIdx === -1 || idIdx === -1) {
       setParseErrors(['Missing required columns. Header must have at least "Name", "Role", and "Identifier" / "Roll".']);
@@ -83,14 +83,27 @@ export const AdminCsvImportModal: React.FC<AdminCsvImportModalProps> = ({
 
       const name = cleanRow[nameIdx] || '';
       const rawRole = (cleanRow[roleIdx] || '').toLowerCase();
-      const role: 'student' | 'teacher' = rawRole.includes('teach') || rawRole.includes('fac') || rawRole.includes('prof') ? 'teacher' : 'student';
+      const role: 'student' | 'teacher' | 'hod' =
+        rawRole.includes('hod') || rawRole.includes('head')
+          ? 'hod'
+          : rawRole.includes('teach') || rawRole.includes('fac') || rawRole.includes('prof')
+          ? 'teacher'
+          : 'student';
       const identifier = cleanRow[idIdx] || '';
       const department = (deptIdx !== -1 && cleanRow[deptIdx]) ? cleanRow[deptIdx] : 'Computer Science & Engineering';
-      const email = (emailIdx !== -1 && cleanRow[emailIdx]) ? cleanRow[emailIdx] : `${name.toLowerCase().replace(/\s+/g, '.')}.${role === 'student' ? 'stu' : 'fac'}@riteindia.edu.in`;
-      const semesterOrDesignation = (desigIdx !== -1 && cleanRow[desigIdx]) ? cleanRow[desigIdx] : (role === 'student' ? 'Semester 1' : 'Assistant Professor');
+      const email = (emailIdx !== -1 && cleanRow[emailIdx])
+        ? cleanRow[emailIdx]
+        : `${name.toLowerCase().replace(/\s+/g, '.')}.${role === 'student' ? 'stu' : role === 'hod' ? 'hod' : 'fac'}@riteindia.edu.in`;
+      const semesterOrDesignation =
+        (desigIdx !== -1 && cleanRow[desigIdx])
+          ? cleanRow[desigIdx]
+          : role === 'student'
+          ? 'Semester 1'
+          : role === 'hod'
+          ? 'Head of Department & Professor'
+          : 'Assistant Professor';
       const attendanceRate = (attIdx !== -1 && !isNaN(parseFloat(cleanRow[attIdx]))) ? parseFloat(cleanRow[attIdx]) : 92.0;
       const studyHoursWeek = (studyIdx !== -1 && !isNaN(parseFloat(cleanRow[studyIdx]))) ? parseFloat(cleanRow[studyIdx]) : (role === 'student' ? 24.0 : 36.0);
-      const phone = (phoneIdx !== -1 && cleanRow[phoneIdx]) ? cleanRow[phoneIdx] : '+91 94370 00000';
 
       if (!name || !identifier) {
         errors.push(`Row ${i + 1}: Skipped due to missing name or identifier.`);
@@ -109,7 +122,6 @@ export const AdminCsvImportModal: React.FC<AdminCsvImportModalProps> = ({
         attendanceRate,
         studyHoursWeek,
         tasksCompleted: role === 'student' ? 15 : 25,
-        phone,
         joinedDate: 'Oct 2026',
       });
     }
@@ -301,9 +313,13 @@ export const AdminCsvImportModal: React.FC<AdminCsvImportModalProps> = ({
                       <td className="py-2 px-3 font-semibold text-slate-900 dark:text-white">{u.name}</td>
                       <td className="py-2 px-3">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                          u.role === 'teacher' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'
+                          u.role === 'hod'
+                            ? 'bg-amber-100 text-amber-800'
+                            : u.role === 'teacher'
+                            ? 'bg-indigo-100 text-indigo-700'
+                            : 'bg-emerald-100 text-emerald-700'
                         }`}>
-                          {u.role}
+                          {u.role === 'hod' ? 'HOD' : u.role}
                         </span>
                       </td>
                       <td className="py-2 px-3 font-mono">{u.rollOrCode}</td>

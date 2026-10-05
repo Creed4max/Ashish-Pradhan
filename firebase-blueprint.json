@@ -1,0 +1,109 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Student, Teacher, or HOD user profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique user ID" },
+        "name": { "type": "string", "description": "Full display name" },
+        "email": { "type": "string", "format": "email", "description": "User email address" },
+        "role": { "type": "string", "enum": ["student", "teacher", "hod", "admin"], "description": "Access control role" },
+        "department": { "type": "string", "description": "Academic department" },
+        "semester": { "type": "number", "description": "Current semester number" },
+        "avatarColor": { "type": "string", "description": "Avatar theme color" },
+        "createdAt": { "type": "string", "description": "Creation timestamp in ISO format" }
+      },
+      "required": ["id", "name", "email", "role"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "Academic coursework assignment or lab submission",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Task identifier" },
+        "subjectId": { "type": "string", "description": "Associated course ID" },
+        "title": { "type": "string", "description": "Task title" },
+        "description": { "type": "string", "description": "Detailed assignment notes" },
+        "dueDate": { "type": "string", "description": "Due date in YYYY-MM-DD format" },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"], "description": "Priority tier" },
+        "status": { "type": "string", "enum": ["pending", "in_progress", "completed"], "description": "Task workflow status" },
+        "type": { "type": "string", "enum": ["assignment", "lab", "exam", "reading", "project"], "description": "Academic task type" },
+        "category": { "type": "string", "description": "Task categorization" },
+        "tags": { "type": "string", "description": "Tags serialized or array" },
+        "completedAt": { "type": "string", "description": "Completion ISO timestamp" },
+        "orderIndex": { "type": "number", "description": "Drag-and-drop priority queue index" }
+      },
+      "required": ["id", "title", "dueDate", "priority", "status"]
+    },
+    "Subject": {
+      "title": "Subject",
+      "description": "College course curriculum subject",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique subject identifier" },
+        "code": { "type": "string", "description": "Course code (e.g. CS301)" },
+        "name": { "type": "string", "description": "Course title" },
+        "color": { "type": "string", "description": "Subject visual color" },
+        "credits": { "type": "number", "description": "Course credits" },
+        "faculty": { "type": "string", "description": "Faculty instructor name" },
+        "attendance": { "type": "number", "description": "Attendance percentage" }
+      },
+      "required": ["id", "code", "name"]
+    },
+    "Note": {
+      "title": "Note",
+      "description": "Lecture note or study material",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Note identifier" },
+        "subjectId": { "type": "string", "description": "Subject reference ID" },
+        "title": { "type": "string", "description": "Note title" },
+        "content": { "type": "string", "description": "Note body markdown or text" },
+        "tags": { "type": "string", "description": "Note search tags" },
+        "date": { "type": "string", "description": "Date created" },
+        "author": { "type": "string", "description": "Author name" },
+        "isPinned": { "type": "boolean", "description": "Whether pinned to top" }
+      },
+      "required": ["id", "title"]
+    },
+    "TimetableSlot": {
+      "title": "TimetableSlot",
+      "description": "Class timetable schedule block",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Slot identifier" },
+        "day": { "type": "string", "description": "Day of the week" },
+        "startTime": { "type": "string", "description": "Start time HH:MM" },
+        "endTime": { "type": "string", "description": "End time HH:MM" },
+        "subjectId": { "type": "string", "description": "Subject reference ID" },
+        "room": { "type": "string", "description": "Classroom or lab venue" },
+        "type": { "type": "string", "description": "Lecture, Lab, or Seminar" },
+        "instructor": { "type": "string", "description": "Instructor name" }
+      },
+      "required": ["id", "day", "startTime", "endTime"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and credentials"
+    },
+    "/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "Coursework assignments, priority queues, and submissions"
+    },
+    "/subjects/{subjectId}": {
+      "schema": "Subject",
+      "description": "Academic course curriculum and faculty details"
+    },
+    "/notes/{noteId}": {
+      "schema": "Note",
+      "description": "Lecture notes and study guides"
+    },
+    "/timetable/{slotId}": {
+      "schema": "TimetableSlot",
+      "description": "Academic schedule timetable slots"
+    }
+  }
+}

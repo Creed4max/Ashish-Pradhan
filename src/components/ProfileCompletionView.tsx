@@ -72,6 +72,12 @@ export const ProfileCompletionView: React.FC<ProfileCompletionViewProps> = ({
       color: '#059669',
       badgeClass: 'bg-emerald-50 border-emerald-200 text-emerald-700',
     },
+    hod: {
+      label: 'Head of Department (HOD)',
+      icon: Award,
+      color: '#d97706',
+      badgeClass: 'bg-amber-50 border-amber-200 text-amber-700',
+    },
     admin: {
       label: 'Institutional Administrator',
       icon: Shield,
@@ -89,10 +95,10 @@ export const ProfileCompletionView: React.FC<ProfileCompletionViewProps> = ({
     if (!major.trim()) missingItems.push('Major / Degree Branch');
     if (!semester.trim()) missingItems.push('Academic Semester');
     if (!studentId.trim()) missingItems.push('Student Roll Number / Registration ID');
-  } else if (role === 'teacher') {
-    if (!department.trim()) missingItems.push('Teaching Department');
+  } else if (role === 'teacher' || role === 'hod') {
+    if (!department.trim()) missingItems.push('Academic Department');
     if (!designation.trim()) missingItems.push('Academic Designation');
-    if (!facultyId.trim()) missingItems.push('Faculty ID Code');
+    if (!facultyId.trim()) missingItems.push(role === 'hod' ? 'HOD ID Code' : 'Faculty ID Code');
   } else if (role === 'admin') {
     if (!adminOffice.trim()) missingItems.push('Administrative Directorate');
     if (!adminCode.trim()) missingItems.push('Admin Security Code');
@@ -116,10 +122,10 @@ export const ProfileCompletionView: React.FC<ProfileCompletionViewProps> = ({
       university: university.trim(),
       major: role === 'student' ? major.trim() : department.trim(),
       semester: role === 'student' ? semester : '',
-      studentId: role === 'student' ? studentId.trim() : (role === 'teacher' ? facultyId.trim() : adminCode.trim()),
-      department: role === 'teacher' ? department.trim() : (role === 'student' ? major.trim() : ''),
-      designation: role === 'teacher' ? designation : '',
-      facultyId: role === 'teacher' ? facultyId.trim() : '',
+      studentId: role === 'student' ? studentId.trim() : (role === 'teacher' || role === 'hod' ? facultyId.trim() : adminCode.trim()),
+      department: (role === 'teacher' || role === 'hod') ? department.trim() : (role === 'student' ? major.trim() : ''),
+      designation: (role === 'teacher' || role === 'hod') ? designation : '',
+      facultyId: (role === 'teacher' || role === 'hod') ? facultyId.trim() : '',
       adminOffice: role === 'admin' ? adminOffice.trim() : '',
       adminCode: role === 'admin' ? adminCode.trim() : '',
       avatarColor,
@@ -230,8 +236,8 @@ export const ProfileCompletionView: React.FC<ProfileCompletionViewProps> = ({
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
               1. Institutional Role Classification <span className="text-rose-500">*</span>
             </label>
-            <div className="grid grid-cols-3 gap-3">
-              {(['student', 'teacher', 'admin'] as UserRole[]).map((r) => {
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {(['student', 'teacher', 'hod', 'admin'] as UserRole[]).map((r) => {
                 const meta = roleMeta[r];
                 const Icon = meta.icon;
                 const isSelected = role === r;
@@ -388,11 +394,11 @@ export const ProfileCompletionView: React.FC<ProfileCompletionViewProps> = ({
               </div>
             )}
 
-            {role === 'teacher' && (
+            {(role === 'teacher' || role === 'hod') && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Faculty ID Code <span className="text-rose-500">*</span>
+                    {role === 'hod' ? 'HOD ID Code' : 'Faculty ID Code'} <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
                     <Hash className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
@@ -401,7 +407,7 @@ export const ProfileCompletionView: React.FC<ProfileCompletionViewProps> = ({
                       required
                       value={facultyId}
                       onChange={(e) => setFacultyId(e.target.value)}
-                      placeholder="e.g. FAC-CSE-102"
+                      placeholder={role === 'hod' ? 'e.g. HOD-CSE-101' : 'e.g. FAC-CSE-102'}
                       className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-mono text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
@@ -409,7 +415,7 @@ export const ProfileCompletionView: React.FC<ProfileCompletionViewProps> = ({
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Department <span className="text-rose-500">*</span>
+                    Academic Department <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
                     <Layers className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
@@ -435,7 +441,7 @@ export const ProfileCompletionView: React.FC<ProfileCompletionViewProps> = ({
                       required
                       value={designation}
                       onChange={(e) => setDesignation(e.target.value)}
-                      placeholder="e.g. Associate Professor & HOD"
+                      placeholder={role === 'hod' ? 'e.g. Head of Department & Professor' : 'e.g. Associate Professor'}
                       className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>

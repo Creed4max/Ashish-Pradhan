@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { formatTime24To12, isTimeInRange } from '../utils/helpers';
 import confetti from 'canvas-confetti';
+import { WeeklyTaskChart } from './WeeklyTaskChart';
 
 interface TeacherDashboardViewProps {
   currentUser: StudentUser | null;
@@ -178,6 +179,14 @@ export const TeacherDashboardView: React.FC<TeacherDashboardViewProps> = ({
     e.preventDefault();
     if (!assignmentTitle.trim()) return;
 
+    const categoryByType: Record<string, string> = {
+      assignment: 'Homework',
+      lab: 'Lab Work',
+      project: 'Project',
+      exam: 'Exam Prep',
+      quiz: 'Exam Prep',
+    };
+
     onAddTask({
       title: assignmentTitle.trim(),
       subjectId: assignmentSubjectId || subjects[0]?.id,
@@ -185,6 +194,8 @@ export const TeacherDashboardView: React.FC<TeacherDashboardViewProps> = ({
       priority: assignmentPriority,
       status: 'pending',
       type: assignmentType,
+      category: categoryByType[assignmentType] || 'Homework',
+      tags: [assignmentType, assignmentPriority === 'high' ? 'urgent' : 'graded'],
     });
 
     const targetSub = subjects.find((s) => s.id === assignmentSubjectId);
@@ -588,6 +599,12 @@ export const TeacherDashboardView: React.FC<TeacherDashboardViewProps> = ({
               </span>
             </div>
           </div>
+
+          {/* Weekly Task Analytics (Recharts Bar Chart: Completed vs Pending) */}
+          <WeeklyTaskChart
+            tasks={tasks}
+            onNavigateTasks={() => onNavigateTab('tasks')}
+          />
 
           {/* Curriculum & Syllabus Topic Progress */}
           <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">

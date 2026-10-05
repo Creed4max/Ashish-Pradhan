@@ -20,10 +20,11 @@ import {
   Bell,
   BookOpen,
   Shield,
-  ShieldCheck,
-  ShieldAlert,
   RefreshCw,
   KeyRound,
+  Mail,
+  Award,
+  Cloud,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -166,13 +167,15 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="hidden xs:inline">New Task</span>
           </button>
 
+          {/* Firebase Cloud Sync Button */}
           <button
             onClick={onOpenBackup}
-            title="Data backup, export & import"
-            className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-            aria-label="Backup and Data Management"
+            title="Firebase Firestore Cloud Sync & Backup"
+            className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg border border-amber-200/60 transition-colors cursor-pointer"
           >
-            <Database className="w-4 h-4" />
+            <Cloud className="w-3.5 h-3.5 text-amber-600" />
+            <span className="hidden md:inline">Firebase</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           </button>
 
           {/* Notifications Bell */}
@@ -204,37 +207,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             onSelectTheme={onSelectTheme}
           />
 
-          {/* Live Session Token Status & Refresh Action */}
-          {session && onRefreshToken && (
-            <div className="hidden sm:flex items-center">
-              <button
-                type="button"
-                onClick={() => onRefreshToken()}
-                disabled={isRefreshingToken}
-                title={`Session Token expires in ${Math.floor(sessionRemainingSec / 60)}m ${sessionRemainingSec % 60}s. Click to refresh token now.`}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
-                  sessionRemainingSec <= 180
-                    ? 'bg-amber-500/15 border-amber-500/50 text-amber-800 animate-pulse hover:bg-amber-500/25'
-                    : 'bg-slate-100 hover:bg-slate-200/80 border-slate-200 text-slate-700'
-                }`}
-              >
-                {sessionRemainingSec <= 180 ? (
-                  <ShieldAlert className="w-3.5 h-3.5 text-amber-600" />
-                ) : (
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                )}
-                <span className="font-mono text-[11px]">
-                  {Math.floor(sessionRemainingSec / 60)}:{String(sessionRemainingSec % 60).padStart(2, '0')}
-                </span>
-                <span className="text-[10px] uppercase font-bold text-slate-400">·</span>
-                <span className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800">
-                  <RefreshCw className={`w-3 h-3 ${isRefreshingToken ? 'animate-spin' : ''}`} />
-                  <span>{isRefreshingToken ? 'Refreshing...' : 'Refresh Token'}</span>
-                </span>
-              </button>
-            </div>
-          )}
-
           {/* User Auth / Profile Pill with Role Display */}
           {currentUser ? (
             <div className="relative" ref={menuRef}>
@@ -250,7 +222,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {currentUser.name.charAt(0)}
                   <span
                     className={`absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full ring-2 ring-white ${
-                      currentUser.role === 'teacher'
+                      currentUser.role === 'hod'
+                        ? 'bg-amber-500'
+                        : currentUser.role === 'teacher'
                         ? 'bg-emerald-500'
                         : currentUser.role === 'admin'
                         ? 'bg-purple-500'
@@ -266,7 +240,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </span>
                     <span
                       className={`text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded-full leading-tight ${
-                        currentUser.role === 'teacher'
+                        currentUser.role === 'hod'
+                          ? 'bg-amber-100 text-amber-800'
+                          : currentUser.role === 'teacher'
                           ? 'bg-emerald-100 text-emerald-800'
                           : currentUser.role === 'admin'
                           ? 'bg-purple-100 text-purple-800'
@@ -277,7 +253,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </span>
                   </div>
                   <span className="text-[10px] text-slate-500 block truncate max-w-[120px]">
-                    {currentUser.role === 'teacher'
+                    {currentUser.role === 'hod'
+                      ? `HOD · ${currentUser.department || 'Dept'}`
+                      : currentUser.role === 'teacher'
                       ? currentUser.designation || currentUser.department || 'Faculty'
                       : currentUser.role === 'admin'
                       ? currentUser.adminOffice || 'Administrator'
@@ -295,22 +273,24 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <p className="text-xs font-bold text-slate-900">{currentUser.name}</p>
                       <span
                         className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
-                          currentUser.role === 'teacher'
+                          currentUser.role === 'hod'
+                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                            : currentUser.role === 'teacher'
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             : currentUser.role === 'admin'
                             ? 'bg-purple-50 text-purple-700 border border-purple-200'
                             : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
                         }`}
                       >
-                        {currentUser.role === 'teacher' ? '👨‍🏫 Teacher' : currentUser.role === 'admin' ? '🛡️ Admin' : '🎓 Student'}
+                        {currentUser.role === 'hod' ? '🏛️ HOD' : currentUser.role === 'teacher' ? '👨‍🏫 Teacher' : currentUser.role === 'admin' ? '🛡️ Admin' : '🎓 Student'}
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500 font-mono truncate">{currentUser.email}</p>
                     
                     {/* Role specific tags */}
                     <div className="mt-2 flex flex-wrap gap-1 text-[10px]">
-                      {currentUser.role === 'teacher' && currentUser.department && (
-                        <span className="bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-semibold">
+                      {(currentUser.role === 'teacher' || currentUser.role === 'hod') && currentUser.department && (
+                        <span className={`${currentUser.role === 'hod' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'} px-1.5 py-0.5 rounded font-semibold`}>
                           {currentUser.department}
                         </span>
                       )}
@@ -367,12 +347,39 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <button
                       onClick={() => {
                         setIsUserMenuOpen(false);
+                        onNavigateToTab('workspace');
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-slate-50 text-slate-700 flex items-center gap-2 cursor-pointer"
+                    >
+                      <Mail className="w-3.5 h-3.5 text-rose-600" />
+                      <span>Gmail & Google Meet Workspace</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
                         onOpenLogin();
                       }}
                       className="w-full text-left px-4 py-2 hover:bg-slate-50 text-slate-700 flex items-center gap-2 cursor-pointer"
                     >
                       <User className="w-3.5 h-3.5 text-slate-500" />
                       <span>Switch Account / Role</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        onOpenBackup();
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-slate-50 text-slate-700 flex items-center justify-between cursor-pointer"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Cloud className="w-3.5 h-3.5 text-amber-500" />
+                        <span>Firebase Cloud & Backup</span>
+                      </span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                        Active
+                      </span>
                     </button>
                   </div>
 

@@ -11,6 +11,7 @@ import {
   Timer,
   Code2,
   LogIn,
+  Mail,
 } from 'lucide-react';
 
 interface NavigationProps {
@@ -29,6 +30,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   currentUser,
 }) => {
   const isTeacher = currentUser?.role === 'teacher';
+  const isHOD = currentUser?.role === 'hod';
   const isAdmin = currentUser?.role === 'admin';
 
   const navItems = [
@@ -53,25 +55,30 @@ export const Navigation: React.FC<NavigationProps> = ({
     },
     {
       id: 'tasks',
-      label: isTeacher ? 'Assignments' : 'Tasks',
+      label: isTeacher || isHOD ? 'Assignments' : 'Tasks',
       icon: CheckSquare,
       badge: pendingTasksCount > 0 ? pendingTasksCount : undefined,
     },
     {
       id: 'notes',
-      label: isTeacher ? 'Lecture Notes' : 'Notes',
+      label: isTeacher || isHOD ? 'Lecture Notes' : 'Notes',
       icon: BookOpen,
     },
     {
       id: 'timetable',
-      label: isTeacher ? 'Teaching Schedule' : isAdmin ? 'Campus Timetable' : 'Timetable',
+      label: isTeacher || isHOD ? 'Teaching Schedule' : isAdmin ? 'Campus Timetable' : 'Timetable',
       icon: Calendar,
       indicator: isClassActiveNow,
     },
     {
       id: 'progress',
-      label: isTeacher ? 'Curriculum Coverage' : 'Study Progress',
+      label: isTeacher || isHOD ? 'Curriculum Coverage' : 'Study Progress',
       icon: Target,
+    },
+    {
+      id: 'workspace',
+      label: 'Gmail & Meet',
+      icon: Mail,
     },
     {
       id: 'cgpa',
@@ -140,14 +147,16 @@ export const Navigation: React.FC<NavigationProps> = ({
           <div className="hidden lg:flex items-center pl-4 shrink-0">
             <span
               className={`text-xs font-bold px-3 py-1 rounded-full border shadow-2xs ${
-                isTeacher
+                isHOD
+                  ? 'bg-amber-50 text-amber-800 border-amber-200'
+                  : isTeacher
                   ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                   : isAdmin
                   ? 'bg-purple-50 text-purple-800 border-purple-200'
                   : 'bg-indigo-50 text-indigo-800 border-indigo-200'
               }`}
             >
-              {isTeacher ? '👨‍🏫 Faculty Portal' : isAdmin ? '🛡️ Admin Portal' : '🎓 Student Portal'}
+              {isHOD ? '🏛️ HOD Portal' : isTeacher ? '👨‍🏫 Faculty Portal' : isAdmin ? '🛡️ Admin Portal' : '🎓 Student Portal'}
             </span>
           </div>
         )}

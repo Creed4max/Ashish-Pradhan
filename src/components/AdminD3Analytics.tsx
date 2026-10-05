@@ -6,6 +6,7 @@ interface AdminD3AnalyticsProps {
   totalUsersCount: number;
   studentCount: number;
   teacherCount: number;
+  hodCount?: number;
   completedTasksCount: number;
   totalTasksCount: number;
 }
@@ -14,6 +15,7 @@ export const AdminD3Analytics: React.FC<AdminD3AnalyticsProps> = ({
   totalUsersCount,
   studentCount,
   teacherCount,
+  hodCount = 0,
   completedTasksCount,
   totalTasksCount,
 }) => {
@@ -453,7 +455,7 @@ export const AdminD3Analytics: React.FC<AdminD3AnalyticsProps> = ({
               </div>
             </div>
             <span className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md">
-              {studentCount} Students · {teacherCount} Faculty
+              {studentCount} Students · {teacherCount} Faculty{hodCount > 0 ? ` · ${hodCount} HOD` : ''}
             </span>
           </div>
 

@@ -34,6 +34,8 @@ export interface Task {
   priority: TaskPriority;
   status: TaskStatus;
   type: TaskType;
+  category?: string; // e.g. 'Homework', 'Lab Report', 'Exam Prep', 'Project Work', 'Research', 'Revision', 'Reading', 'General'
+  tags?: string[]; // e.g. ['urgent', 'midterm', 'chapter-4', 'viva']
   completedAt?: string;
 }
 
@@ -116,7 +118,21 @@ export interface WeeklyGoals {
   activeType: 'hours' | 'tasks';
 }
 
-export type UserRole = 'student' | 'teacher' | 'admin';
+export type UserRole = 'student' | 'teacher' | 'hod' | 'admin';
+
+export interface TeacherAuthPass {
+  id: string;
+  passCode: string;
+  teacherEmail: string;
+  teacherName?: string;
+  department: string;
+  role: 'teacher' | 'hod';
+  createdDate: string;
+  createdByAdminEmail: string;
+  status: 'active' | 'used' | 'revoked';
+  usedAt?: string;
+  generatedFacultyId?: string;
+}
 
 export interface StudentUser {
   id: string;
@@ -132,10 +148,27 @@ export interface StudentUser {
   isProfileComplete?: boolean;
   // Role-specific fields
   department?: string;
-  designation?: string; // e.g. Assistant Professor, HOD
+  designation?: string; // e.g. Assistant Professor, Professor & HOD
   facultyId?: string;   // e.g. FAC-204
   adminOffice?: string; // e.g. Academic Registrar, Dean's Office
   adminCode?: string;   // e.g. ADM-901
+  authPassUsed?: string; // The teacher authorization pass used to create the account
+  initialTempPassword?: string; // Automated temporary password issued upon registration
+  tempPasswordIssued?: boolean;
+}
+
+export interface TeacherEmailCredentialNotice {
+  id: string;
+  teacherEmail: string;
+  teacherName: string;
+  facultyId: string;
+  department: string;
+  role: 'teacher' | 'hod';
+  temporaryPassword: string;
+  sentAt: string;
+  status: 'dispatched' | 'delivered';
+  subject: string;
+  messageId?: string;
 }
 
 export type AppUser = StudentUser;
@@ -187,11 +220,33 @@ export interface AppTheme {
 export interface AuthSession {
   accessToken: string;
   refreshToken: string;
-  expiresAt: number; // Unix timestamp in milliseconds
+  expiresAt: number; // Unix timestamp in milliseconds (1-hour access token)
+  refreshTokenExpiresAt?: number; // Unix timestamp in milliseconds (10-day refresh window)
   issuedAt: number;  // Unix timestamp in milliseconds
   userId: string;
   userEmail?: string;
   tokenType?: string;
+}
+
+export interface DepartmentAccessPermissions {
+  curriculumApproval: boolean;
+  facultyAllocation: boolean;
+  attendanceSanction: boolean;
+  emergencyBroadcast: boolean;
+  labGovernance: boolean;
+  marksVerification: boolean;
+  googleMeetConferencing: boolean;
+}
+
+export interface DepartmentGovernance {
+  department: string;
+  hodUserId?: string;
+  hodName?: string;
+  hodEmail?: string;
+  hodFacultyId?: string;
+  assignedDate?: string;
+  activeFacultyCount?: number;
+  permissions: DepartmentAccessPermissions;
 }
 
 

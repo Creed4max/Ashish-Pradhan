@@ -44,9 +44,12 @@ import { LoginPageView } from './components/LoginPageView';
 import { CampusOsSplashView } from './components/CampusOsSplashView';
 import { ProfileCompletionView } from './components/ProfileCompletionView';
 import { SessionTokenManager } from './components/SessionTokenManager';
+import { GoogleWorkspacePanel } from './components/GoogleWorkspacePanel';
 import { BackupModal } from './components/BackupModal';
 import { ToastNotificationContainer } from './components/ToastNotificationContainer';
 import { NotificationDrawer } from './components/NotificationDrawer';
+import { FirebaseSync } from './services/firebaseSync';
+import { testFirebaseConnection } from './firebase';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<StudentUser | null>(() => Storage.getCurrentUser());
@@ -80,18 +83,97 @@ export default function App() {
   const [session, setSession] = useState<AuthSession | null>(() => Storage.getSession());
   const [isRefreshingToken, setIsRefreshingToken] = useState(false);
 
-  // Maintain active token session for signed-in user
+  // Maintain active token session for signed-in user (1 hour session access token)
   useEffect(() => {
     if (currentUser && !session) {
-      const newSess = Storage.createLocalSession(currentUser.id, currentUser.email, 15);
+      const newSess = Storage.createLocalSession(currentUser.id, currentUser.email, 60);
       setSession(newSess);
     }
   }, [currentUser, session]);
+
+  // Silent Background Token Refresh:
+  // Automatically and seamlessly renews access tokens in the background before expiration (5 minutes ahead)
+  useEffect(() => {
+    if (!currentUser || !session?.expiresAt) return;
+
+    const checkAndRefresh = async () => {
+      const now = Date.now();
+      const msRemaining = session.expiresAt - now;
+
+      // When token has 5 minutes or less remaining, silently renew in the background
+      if (msRemaining <= 5 * 60 * 1000 && msRemaining > 0 && !isRefreshingToken) {
+        setIsRefreshingToken(true);
+        try {
+          const updated = await Storage.refreshSessionToken(session);
+          setSession(updated);
+        } catch (err) {
+          console.warn('Background token refresh attempt failed:', err);
+        } finally {
+          setIsRefreshingToken(false);
+        }
+      }
+    };
+
+    const interval = setInterval(checkAndRefresh, 30 * 1000);
+    checkAndRefresh();
+
+    return () => clearInterval(interval);
+  }, [currentUser, session, isRefreshingToken]);
 
   // Apply theme to document element on mount and change
   useEffect(() => {
     applyThemeToDocument(currentTheme);
   }, [currentTheme]);
+
+  // Initial Firebase Cloud Connection & Data Hydration
+  useEffect(() => {
+    testFirebaseConnection();
+
+    // If local state has no records, check Firebase Firestore to hydrate
+    const hydrateFromFirebaseCloud = async () => {
+      try {
+        const localTasks = Storage.getTasks();
+        if (localTasks.length === 0) {
+          const cloudTasks = await FirebaseSync.loadTasksFromCloud();
+          if (cloudTasks && cloudTasks.length > 0) {
+            setTasks(cloudTasks);
+            Storage.saveTasks(cloudTasks);
+          }
+        }
+
+        const localSubjects = Storage.getSubjects();
+        if (localSubjects.length === 0) {
+          const cloudSubjects = await FirebaseSync.loadSubjectsFromCloud();
+          if (cloudSubjects && cloudSubjects.length > 0) {
+            setSubjects(cloudSubjects);
+            Storage.saveSubjects(cloudSubjects);
+          }
+        }
+
+        const localNotes = Storage.getNotes();
+        if (localNotes.length === 0) {
+          const cloudNotes = await FirebaseSync.loadNotesFromCloud();
+          if (cloudNotes && cloudNotes.length > 0) {
+            setNotes(cloudNotes);
+            Storage.saveNotes(cloudNotes);
+          }
+        }
+
+        const localTimetable = Storage.getTimetable();
+        if (localTimetable.length === 0) {
+          const cloudTimetable = await FirebaseSync.loadTimetableFromCloud();
+          if (cloudTimetable && cloudTimetable.length > 0) {
+            setTimetable(cloudTimetable);
+            Storage.saveTimetable(cloudTimetable);
+          }
+        }
+      } catch (err) {
+        console.log('Firebase hydration note:', err);
+      }
+    };
+
+    hydrateFromFirebaseCloud();
+  }, []);
 
   const handleSelectTheme = (newTheme: AppThemeId) => {
     setCurrentTheme(newTheme);
@@ -250,20 +332,22 @@ export default function App() {
     }
   };
 
-  const handleRefreshToken = async () => {
+  const handleRefreshToken = async (notifyUser = false) => {
     setIsRefreshingToken(true);
     try {
       const updated = await Storage.refreshSessionToken(session);
       setSession(updated);
-      handleTriggerAlert({
-        id: `refresh-${Date.now()}`,
-        type: 'system',
-        title: 'Security Session Renewed',
-        message: 'Access and refresh tokens successfully renewed. Session extended for 15 minutes.',
-        timestamp: new Date().toISOString(),
-        read: false,
-        urgent: false,
-      });
+      if (notifyUser) {
+        handleTriggerAlert({
+          id: `refresh-${Date.now()}`,
+          type: 'system',
+          title: 'Security Session Renewed',
+          message: 'Access and refresh tokens successfully renewed.',
+          timestamp: new Date().toISOString(),
+          read: false,
+          urgent: false,
+        });
+      }
     } catch (err) {
       console.error('Failed to refresh token:', err);
     } finally {
@@ -331,10 +415,11 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Sync to storage
+  // Sync to storage & Firebase Cloud
   const handleUpdateTasks = (newTasks: Task[]) => {
     setTasks(newTasks);
     Storage.saveTasks(newTasks);
+    FirebaseSync.syncAllTasksToCloud(newTasks);
   };
 
   const handleAddTask = (taskData: Partial<Task>) => {
@@ -347,9 +432,12 @@ export default function App() {
       priority: taskData.priority || 'medium',
       status: taskData.status || 'pending',
       type: taskData.type || 'assignment',
+      category: taskData.category || 'Homework',
+      tags: taskData.tags || [],
     };
     const updated = [newTask, ...tasks];
     handleUpdateTasks(updated);
+    FirebaseSync.saveTaskToCloud(newTask);
   };
 
   const handleEditTask = (taskId: string, updates: Partial<Task>) => {
@@ -360,6 +448,7 @@ export default function App() {
   const handleDeleteTask = (taskId: string) => {
     const updated = tasks.filter((t) => t.id !== taskId);
     handleUpdateTasks(updated);
+    FirebaseSync.deleteTaskFromCloud(taskId);
   };
 
   const handleToggleTask = (taskId: string) => {
@@ -375,11 +464,25 @@ export default function App() {
     handleUpdateTasks(updated);
   };
 
+  const handleBulkUpdateTasks = (taskIds: string[], updates: Partial<Task>) => {
+    const idSet = new Set(taskIds);
+    const updated = tasks.map((t) => (idSet.has(t.id) ? { ...t, ...updates } : t));
+    handleUpdateTasks(updated);
+  };
+
+  const handleBulkDeleteTasks = (taskIds: string[]) => {
+    const idSet = new Set(taskIds);
+    const updated = tasks.filter((t) => !idSet.has(t.id));
+    handleUpdateTasks(updated);
+    taskIds.forEach((id) => FirebaseSync.deleteTaskFromCloud(id));
+  };
+
   // Subjects & Notes handlers
   const handleAddSubject = (newSubject: Subject) => {
     const updated = [...subjects, newSubject];
     setSubjects(updated);
     Storage.saveSubjects(updated);
+    FirebaseSync.syncSubjectsToCloud(updated);
   };
 
   const handleAddNote = (newNoteData: Partial<Note>) => {
@@ -396,18 +499,21 @@ export default function App() {
     const updated = [newNote, ...notes];
     setNotes(updated);
     Storage.saveNotes(updated);
+    FirebaseSync.syncNotesToCloud(updated);
   };
 
   const handleUpdateNote = (noteId: string, updates: Partial<Note>) => {
     const updated = notes.map((n) => (n.id === noteId ? { ...n, ...updates } : n));
     setNotes(updated);
     Storage.saveNotes(updated);
+    FirebaseSync.syncNotesToCloud(updated);
   };
 
   const handleDeleteNote = (noteId: string) => {
     const updated = notes.filter((n) => n.id !== noteId);
     setNotes(updated);
     Storage.saveNotes(updated);
+    FirebaseSync.syncNotesToCloud(updated);
   };
 
   // Timetable handlers
@@ -425,18 +531,21 @@ export default function App() {
     const updated = [...timetable, newSlot];
     setTimetable(updated);
     Storage.saveTimetable(updated);
+    FirebaseSync.syncTimetableToCloud(updated);
   };
 
   const handleUpdateTimetableSlot = (slotId: string, updates: Partial<TimetableSlot>) => {
     const updated = timetable.map((s) => (s.id === slotId ? { ...s, ...updates } : s));
     setTimetable(updated);
     Storage.saveTimetable(updated);
+    FirebaseSync.syncTimetableToCloud(updated);
   };
 
   const handleDeleteTimetableSlot = (slotId: string) => {
     const updated = timetable.filter((s) => s.id !== slotId);
     setTimetable(updated);
     Storage.saveTimetable(updated);
+    FirebaseSync.syncTimetableToCloud(updated);
   };
 
   // Syllabus handlers
@@ -659,11 +768,14 @@ export default function App() {
             tasks={tasks}
             subjects={subjects}
             currentUser={currentUser}
-            isReadOnly={currentUser?.role === 'student'}
+            isReadOnly={false}
             onAddTask={handleAddTask}
             onUpdateTask={handleEditTask}
             onDeleteTask={handleDeleteTask}
             onToggleTask={handleToggleTask}
+            onReorderTasks={handleUpdateTasks}
+            onBulkUpdateTasks={handleBulkUpdateTasks}
+            onBulkDeleteTasks={handleBulkDeleteTasks}
           />
         )}
 
@@ -725,6 +837,15 @@ export default function App() {
             onAddProblem={handleAddCodingProblem}
             onUpdateProblem={handleUpdateCodingProblem}
             onDeleteProblem={handleDeleteCodingProblem}
+          />
+        )}
+
+        {(activeTab === 'workspace' || activeTab === 'gmail' || activeTab === 'meet') && (
+          <GoogleWorkspacePanel
+            currentUser={currentUser}
+            initialTab={activeTab === 'meet' ? 'meet' : 'gmail'}
+            onTriggerAlert={handleTriggerAlert}
+            prefilledMeetDepartment={currentUser?.department || 'Computer Science & Engineering'}
           />
         )}
       </main>

@@ -1,6 +1,6 @@
 {
   "name": "CampusOS",
-  "description": "Your college life, organized. Complete student productivity suite with notes, tasks, timetable, study progress, CGPA calculator, Pomodoro timer, and coding tracker.",
+  "description": "RITE-OS: Official academic operating system for Radhakrishna Institute of Technology & Engineering students, faculty, and administration. Coursework, notes, timetable, tasks, Gmail, Google Meet, and AI study assistant.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

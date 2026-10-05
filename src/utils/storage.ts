@@ -15,6 +15,10 @@ import {
   AppNotification,
   NotificationSettings,
   AuthSession,
+  TeacherAuthPass,
+  DepartmentGovernance,
+  DepartmentAccessPermissions,
+  TeacherEmailCredentialNotice,
 } from '../types';
 
 const STORAGE_KEYS = {
@@ -36,6 +40,9 @@ const STORAGE_KEYS = {
   CLEARED_V3_FLAG: 'campusos_cleared_predefined_v3_clean',
   REGISTERED_ACCOUNTS: 'campusos_registered_accounts_v3',
   AUTH_SESSION: 'campusos_auth_session_v3',
+  TEACHER_AUTH_PASSES: 'campusos_teacher_auth_passes_v3',
+  DEPARTMENT_GOVERNANCE: 'campusos_department_governance_v3',
+  TEACHER_CREDENTIAL_EMAILS: 'campusos_teacher_credential_emails_v3',
 };
 
 // Purge any legacy predefined cached data once so user gets a pristine clean state
@@ -113,16 +120,33 @@ export const DEFAULT_REGISTERED_USERS: RegisteredAccount[] = [
     id: 'user-swain-02',
     name: 'Dr. Debabrata Swain',
     email: 'd.swain@riteindia.edu.in',
-    role: 'teacher',
+    role: 'hod',
     university: 'Radhakrishna Institute of Technology and Engineering (RITE)',
     major: 'Computer Science & Engineering',
     semester: '',
-    studentId: 'FAC-CSE-102',
+    studentId: 'HOD-CSE-101',
     department: 'Computer Science & Engineering',
-    designation: 'HOD & Professor',
-    facultyId: 'FAC-CSE-102',
+    designation: 'Head of Department & Professor',
+    facultyId: 'HOD-CSE-101',
     avatarColor: '#059669',
     joinedAt: '2026-07-15T00:00:00.000Z',
+    password: 'password123',
+    isProfileComplete: true,
+  },
+  {
+    id: 'user-jena-04',
+    name: 'Prof. Ananya Jena',
+    email: 'a.jena@riteindia.edu.in',
+    role: 'teacher',
+    university: 'Radhakrishna Institute of Technology and Engineering (RITE)',
+    major: 'Electronics & Communication',
+    semester: '',
+    studentId: 'FAC-ECE-204',
+    department: 'Electronics & Communication',
+    designation: 'Assistant Professor',
+    facultyId: 'FAC-ECE-204',
+    avatarColor: '#0284c7',
+    joinedAt: '2026-08-10T00:00:00.000Z',
     password: 'password123',
     isProfileComplete: true,
   },
@@ -163,7 +187,7 @@ export const isUserProfileComplete = (user: StudentUser | null): boolean => {
       user.semester?.trim() &&
       user.studentId?.trim()
     );
-  } else if (user.role === 'teacher') {
+  } else if (user.role === 'teacher' || user.role === 'hod') {
     return Boolean(
       user.department?.trim() &&
       user.designation?.trim() &&
@@ -234,6 +258,144 @@ function save<T>(key: string, value: T): void {
     console.error(`Failed to save to localStorage for key ${key}`, e);
   }
 }
+
+export const DEFAULT_TEACHER_PASSES: TeacherAuthPass[] = [
+  {
+    id: 'pass-demo-1',
+    passCode: 'FAC-PASS-884102',
+    teacherEmail: 'subhashree.cse@riteindia.edu.in',
+    teacherName: 'Dr. Subhashree Mishra',
+    department: 'Computer Science & Engineering',
+    role: 'teacher',
+    createdDate: new Date().toISOString(),
+    createdByAdminEmail: 'admin@riteindia.edu.in',
+    status: 'active',
+    generatedFacultyId: 'FAC-CSE-105',
+  },
+  {
+    id: 'pass-demo-2',
+    passCode: 'HOD-PASS-992314',
+    teacherEmail: 'hod.ece@riteindia.edu.in',
+    teacherName: 'Prof. Rajesh K. Sahu',
+    department: 'Electronics & Communication',
+    role: 'hod',
+    createdDate: new Date().toISOString(),
+    createdByAdminEmail: 'admin@riteindia.edu.in',
+    status: 'active',
+    generatedFacultyId: 'HOD-ECE-101',
+  },
+];
+
+export const DEFAULT_DEPARTMENT_GOVERNANCE: DepartmentGovernance[] = [
+  {
+    department: 'Computer Science & Engineering',
+    hodUserId: 'user-swain-02',
+    hodName: 'Dr. Debabrata Swain',
+    hodEmail: 'd.swain@riteindia.edu.in',
+    hodFacultyId: 'HOD-CSE-101',
+    assignedDate: '2026-07-15T00:00:00.000Z',
+    activeFacultyCount: 14,
+    permissions: {
+      curriculumApproval: true,
+      facultyAllocation: true,
+      attendanceSanction: true,
+      emergencyBroadcast: true,
+      labGovernance: true,
+      marksVerification: true,
+      googleMeetConferencing: true,
+    },
+  },
+  {
+    department: 'Electronics & Communication',
+    hodUserId: '',
+    hodName: 'Prof. Rajesh K. Sahu',
+    hodEmail: 'hod.ece@riteindia.edu.in',
+    hodFacultyId: 'HOD-ECE-101',
+    assignedDate: '2026-08-01T00:00:00.000Z',
+    activeFacultyCount: 9,
+    permissions: {
+      curriculumApproval: true,
+      facultyAllocation: true,
+      attendanceSanction: true,
+      emergencyBroadcast: false,
+      labGovernance: true,
+      marksVerification: true,
+      googleMeetConferencing: true,
+    },
+  },
+  {
+    department: 'Mechanical Engineering',
+    hodUserId: '',
+    hodName: '',
+    hodEmail: '',
+    hodFacultyId: '',
+    assignedDate: '',
+    activeFacultyCount: 8,
+    permissions: {
+      curriculumApproval: false,
+      facultyAllocation: false,
+      attendanceSanction: false,
+      emergencyBroadcast: false,
+      labGovernance: false,
+      marksVerification: false,
+      googleMeetConferencing: false,
+    },
+  },
+  {
+    department: 'Electrical Engineering',
+    hodUserId: '',
+    hodName: '',
+    hodEmail: '',
+    hodFacultyId: '',
+    assignedDate: '',
+    activeFacultyCount: 7,
+    permissions: {
+      curriculumApproval: false,
+      facultyAllocation: false,
+      attendanceSanction: false,
+      emergencyBroadcast: false,
+      labGovernance: false,
+      marksVerification: false,
+      googleMeetConferencing: false,
+    },
+  },
+  {
+    department: 'Civil Engineering',
+    hodUserId: '',
+    hodName: '',
+    hodEmail: '',
+    hodFacultyId: '',
+    assignedDate: '',
+    activeFacultyCount: 6,
+    permissions: {
+      curriculumApproval: false,
+      facultyAllocation: false,
+      attendanceSanction: false,
+      emergencyBroadcast: false,
+      labGovernance: false,
+      marksVerification: false,
+      googleMeetConferencing: false,
+    },
+  },
+  {
+    department: 'Management Studies (MBA)',
+    hodUserId: '',
+    hodName: '',
+    hodEmail: '',
+    hodFacultyId: '',
+    assignedDate: '',
+    activeFacultyCount: 5,
+    permissions: {
+      curriculumApproval: false,
+      facultyAllocation: false,
+      attendanceSanction: false,
+      emergencyBroadcast: false,
+      labGovernance: false,
+      marksVerification: false,
+      googleMeetConferencing: false,
+    },
+  },
+];
 
 export const Storage = {
   getSubjects: (): Subject[] => load(STORAGE_KEYS.SUBJECTS, DEFAULT_SUBJECTS),
@@ -355,13 +517,17 @@ export const Storage = {
     }
   },
 
-  createLocalSession: (userId: string, email?: string, durationMinutes = 15): AuthSession => {
+  createLocalSession: (userId: string, email?: string, durationMinutes = 60): AuthSession => {
     const now = Date.now();
-    const expiresAt = now + durationMinutes * 60 * 1000;
+    // 1-hour session access token (60 minutes = 3,600,000 ms)
+    const expiresAt = now + Math.max(60, durationMinutes) * 60 * 1000;
+    // 10-day refresh token rotation window (10 days = 864,000,000 ms)
+    const refreshTokenExpiresAt = now + 10 * 24 * 60 * 60 * 1000;
     const session: AuthSession = {
       accessToken: `access_${userId.slice(0, 10)}_${now}_${Math.random().toString(36).slice(2, 10)}`,
       refreshToken: `refresh_${userId.slice(0, 10)}_${now}_${Math.random().toString(36).slice(2, 12)}`,
       expiresAt,
+      refreshTokenExpiresAt,
       issuedAt: now,
       userId,
       userEmail: email,
@@ -378,6 +544,11 @@ export const Storage = {
     const email = sessionToRefresh?.userEmail || currentUser?.email;
     const refreshToken = sessionToRefresh?.refreshToken || `refresh_${userId}_${Date.now()}`;
 
+    // Verify 10-day refresh token validity locally
+    if (sessionToRefresh?.refreshTokenExpiresAt && sessionToRefresh.refreshTokenExpiresAt < Date.now()) {
+      throw new Error('Refresh token has expired (10-day limit exceeded). Please log in again.');
+    }
+
     try {
       const response = await fetch('/api/auth/refresh', {
         method: 'POST',
@@ -385,7 +556,7 @@ export const Storage = {
         body: JSON.stringify({
           refreshToken,
           userId,
-          durationMinutes: 15,
+          durationMinutes: 60,
         }),
       });
 
@@ -395,6 +566,7 @@ export const Storage = {
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
           expiresAt: data.expiresAt,
+          refreshTokenExpiresAt: data.refreshTokenExpiresAt || (Date.now() + 10 * 24 * 60 * 60 * 1000),
           issuedAt: data.issuedAt,
           userId: data.userId || userId,
           userEmail: email,
@@ -407,9 +579,110 @@ export const Storage = {
       console.warn('Network call to /api/auth/refresh failed, extending local session token:', err);
     }
 
-    // Local fallback refresh token renewal
-    const updated = Storage.createLocalSession(userId, email, 15);
+    // Local fallback refresh token renewal (1-hour access, 10-day refresh)
+    const updated = Storage.createLocalSession(userId, email, 60);
     return updated;
+  },
+
+  // Teacher Authorization Pass Management
+  getTeacherAuthPasses: (): TeacherAuthPass[] =>
+    load(STORAGE_KEYS.TEACHER_AUTH_PASSES, DEFAULT_TEACHER_PASSES),
+  saveTeacherAuthPasses: (data: TeacherAuthPass[]): void =>
+    save(STORAGE_KEYS.TEACHER_AUTH_PASSES, data),
+
+  createTeacherAuthPass: (params: {
+    teacherEmail: string;
+    teacherName?: string;
+    department: string;
+    role: 'teacher' | 'hod';
+    adminEmail?: string;
+  }): TeacherAuthPass => {
+    const passes = Storage.getTeacherAuthPasses();
+    const prefix = params.role === 'hod' ? 'HOD-PASS' : 'FAC-PASS';
+    const randCode = Math.floor(100000 + Math.random() * 900000);
+    const passCode = `${prefix}-${randCode}`;
+
+    // Generate suggested faculty/HOD code based on department
+    const deptPrefix =
+      params.department.includes('Computer') ? 'CSE' :
+      params.department.includes('Electronics') ? 'ECE' :
+      params.department.includes('Mechanical') ? 'MECH' :
+      params.department.includes('Civil') ? 'CIVIL' :
+      params.department.includes('Electrical') ? 'EE' : 'MGMT';
+    const num = Math.floor(100 + Math.random() * 900);
+    const generatedFacultyId = params.role === 'hod' ? `HOD-${deptPrefix}-01` : `FAC-${deptPrefix}-${num}`;
+
+    const newPass: TeacherAuthPass = {
+      id: `pass-${Date.now()}`,
+      passCode,
+      teacherEmail: params.teacherEmail.trim().toLowerCase(),
+      teacherName: params.teacherName?.trim(),
+      department: params.department,
+      role: params.role,
+      createdDate: new Date().toISOString(),
+      createdByAdminEmail: params.adminEmail || 'admin@riteindia.edu.in',
+      status: 'active',
+      generatedFacultyId,
+    };
+
+    Storage.saveTeacherAuthPasses([newPass, ...passes]);
+    return newPass;
+  },
+
+  validateTeacherAuthPass: (
+    passCode: string,
+    email?: string
+  ): { valid: boolean; pass?: TeacherAuthPass; error?: string } => {
+    const trimmed = passCode.trim().toUpperCase();
+    if (!trimmed) {
+      return { valid: false, error: 'Please enter the authorization pass provided by the Admin.' };
+    }
+
+    const passes = Storage.getTeacherAuthPasses();
+    const found = passes.find((p) => p.passCode.toUpperCase() === trimmed);
+
+    if (!found) {
+      return {
+        valid: false,
+        error: 'Invalid Authorization Pass. Please request an authorized faculty pass from your Admin.',
+      };
+    }
+
+    if (found.status === 'used') {
+      return {
+        valid: false,
+        error: `This Authorization Pass has already been redeemed for Teacher ID (${found.generatedFacultyId || 'claimed'}).`,
+      };
+    }
+
+    if (found.status === 'revoked') {
+      return { valid: false, error: 'This Authorization Pass has been revoked by the Administrator.' };
+    }
+
+    if (email && found.teacherEmail && email.trim().toLowerCase() !== found.teacherEmail.toLowerCase()) {
+      return {
+        valid: false,
+        error: `This pass was issued to ${found.teacherEmail}. Please register with that institutional email address.`,
+      };
+    }
+
+    return { valid: true, pass: found };
+  },
+
+  claimTeacherAuthPass: (passCode: string): boolean => {
+    const trimmed = passCode.trim().toUpperCase();
+    const passes = Storage.getTeacherAuthPasses();
+    const idx = passes.findIndex((p) => p.passCode.toUpperCase() === trimmed);
+    if (idx >= 0) {
+      passes[idx] = {
+        ...passes[idx],
+        status: 'used',
+        usedAt: new Date().toISOString(),
+      };
+      Storage.saveTeacherAuthPasses(passes);
+      return true;
+    }
+    return false;
   },
 
   // Notification Center Storage
@@ -418,6 +691,131 @@ export const Storage = {
 
   getNotificationSettings: (): NotificationSettings => load(STORAGE_KEYS.NOTIFICATION_SETTINGS, DEFAULT_NOTIFICATION_SETTINGS),
   saveNotificationSettings: (settings: NotificationSettings) => save(STORAGE_KEYS.NOTIFICATION_SETTINGS, settings),
+
+  // Department Governance & HOD Permission Management
+  getDepartmentGovernance: (): DepartmentGovernance[] =>
+    load(STORAGE_KEYS.DEPARTMENT_GOVERNANCE, DEFAULT_DEPARTMENT_GOVERNANCE),
+  saveDepartmentGovernance: (data: DepartmentGovernance[]): void =>
+    save(STORAGE_KEYS.DEPARTMENT_GOVERNANCE, data),
+
+  updateDepartmentPermissions: (
+    departmentName: string,
+    permissions: Partial<DepartmentAccessPermissions>
+  ): DepartmentGovernance[] => {
+    const list = Storage.getDepartmentGovernance();
+    const updated = list.map((dept) => {
+      if (dept.department === departmentName) {
+        return {
+          ...dept,
+          permissions: {
+            ...dept.permissions,
+            ...permissions,
+          },
+        };
+      }
+      return dept;
+    });
+    Storage.saveDepartmentGovernance(updated);
+    return updated;
+  },
+
+  assignHODToDepartment: (
+    departmentName: string,
+    facultyUser: RegisteredAccount,
+    permissions?: Partial<DepartmentAccessPermissions>
+  ): DepartmentGovernance[] => {
+    const list = Storage.getDepartmentGovernance();
+    const updated = list.map((dept) => {
+      if (dept.department === departmentName) {
+        return {
+          ...dept,
+          hodUserId: facultyUser.id,
+          hodName: facultyUser.name,
+          hodEmail: facultyUser.email,
+          hodFacultyId: facultyUser.facultyId || `HOD-${departmentName.slice(0, 3).toUpperCase()}-101`,
+          assignedDate: new Date().toISOString(),
+          permissions: {
+            ...dept.permissions,
+            ...(permissions || {
+              curriculumApproval: true,
+              facultyAllocation: true,
+              attendanceSanction: true,
+              emergencyBroadcast: true,
+              labGovernance: true,
+              marksVerification: true,
+              googleMeetConferencing: true,
+            }),
+          },
+        };
+      }
+      return dept;
+    });
+    Storage.saveDepartmentGovernance(updated);
+
+    // Promote the registered user account role to 'hod'
+    const registered = Storage.getRegisteredUsers();
+    const userIdx = registered.findIndex((u) => u.id === facultyUser.id || u.email === facultyUser.email);
+    if (userIdx >= 0) {
+      registered[userIdx] = {
+        ...registered[userIdx],
+        role: 'hod',
+        department: departmentName,
+        designation: 'Head of Department & Professor',
+        facultyId: registered[userIdx].facultyId?.startsWith('HOD-')
+          ? registered[userIdx].facultyId
+          : `HOD-${departmentName.slice(0, 3).toUpperCase()}-01`,
+      };
+      Storage.saveRegisteredUsers(registered);
+    }
+
+    return updated;
+  },
+
+  relieveHODFromDepartment: (departmentName: string): DepartmentGovernance[] => {
+    const list = Storage.getDepartmentGovernance();
+    let relievedUserId = '';
+    const updated = list.map((dept) => {
+      if (dept.department === departmentName) {
+        relievedUserId = dept.hodUserId || '';
+        return {
+          ...dept,
+          hodUserId: '',
+          hodName: '',
+          hodEmail: '',
+          hodFacultyId: '',
+          assignedDate: '',
+        };
+      }
+      return dept;
+    });
+    Storage.saveDepartmentGovernance(updated);
+
+    if (relievedUserId) {
+      const registered = Storage.getRegisteredUsers();
+      const userIdx = registered.findIndex((u) => u.id === relievedUserId);
+      if (userIdx >= 0) {
+        registered[userIdx] = {
+          ...registered[userIdx],
+          role: 'teacher',
+          designation: 'Professor',
+        };
+        Storage.saveRegisteredUsers(registered);
+      }
+    }
+
+    return updated;
+  },
+
+  // Automated Email Service: Dispatched teacher credential notices
+  getTeacherCredentialEmails: (): TeacherEmailCredentialNotice[] => {
+    return load<TeacherEmailCredentialNotice[]>(STORAGE_KEYS.TEACHER_CREDENTIAL_EMAILS, []);
+  },
+
+  saveTeacherCredentialEmail: (notice: TeacherEmailCredentialNotice): void => {
+    const existing = Storage.getTeacherCredentialEmails();
+    const updated = [notice, ...existing.filter((n) => n.id !== notice.id)];
+    save(STORAGE_KEYS.TEACHER_CREDENTIAL_EMAILS, updated);
+  },
 
   // Reset all workspace data to a clean empty state
   resetToDefault: (): void => {

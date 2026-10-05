@@ -48,14 +48,12 @@ export const SessionTokenManager: React.FC<SessionTokenManagerProps> = ({
       const remaining = Math.max(0, Math.floor((session.expiresAt - Date.now()) / 1000));
       setSecondsRemaining(remaining);
 
-      // Auto-refresh when 45 seconds remain, before the session actually expires
-      if (remaining <= 45 && remaining > 0 && !hasAutoRefreshed && !isRefreshing) {
+      // Auto-refresh in background when 5 minutes (300 seconds) remain, before the session ever approaches expiration
+      if (remaining <= 300 && remaining > 0 && !hasAutoRefreshed && !isRefreshing) {
         setHasAutoRefreshed(true);
         onRefreshToken().then(() => {
           setHasAutoRefreshed(false);
           setIsBannerDismissed(false);
-          setJustRefreshedNotice(true);
-          setTimeout(() => setJustRefreshedNotice(false), 4000);
         });
       }
     };
